@@ -7,7 +7,7 @@ const { Command } = require('commander');
 
 function extractMermaidBlocks(markdownContent) {
   const mermaidBlocks = [];
-  const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/g;
+  const mermaidRegex = /```(?:mermaid|Mermaid|MERMAID)\s*\r?\n([\s\S]*?)\r?\n```/gi;
   let match;
   let index = 0;
 
@@ -23,13 +23,13 @@ function extractMermaidBlocks(markdownContent) {
 
 async function convertMermaidToPng(mermaidContent, outputPath) {
   const tempMmdFile = path.join(process.cwd(), `temp_${Date.now()}.mmd`);
-  
+
   try {
     fs.writeFileSync(tempMmdFile, mermaidContent);
-    
+
     const mmdc = path.join(process.cwd(), 'node_modules', '.bin', 'mmdc');
     const command = `"${mmdc}" -i "${tempMmdFile}" -o "${outputPath}"`;
-    
+
     execSync(command, { stdio: 'inherit' });
     console.log(`Generated: ${outputPath}`);
   } catch (error) {
@@ -48,25 +48,25 @@ function processMarkdownFile(markdownFile) {
   }
 
   try {
-    const markdownContent = fs.readFileSync(markdownFile, 'utf8');
+    const markdownContent = fs.readFileSync(markdownFile, 'utf8');    
     const mermaidBlocks = extractMermaidBlocks(markdownContent);
-    
+
     if (mermaidBlocks.length === 0) {
       console.log('No Mermaid diagrams found in the markdown file.');
       return;
     }
 
     console.log(`Found ${mermaidBlocks.length} Mermaid diagram(s)`);
-    
+
     const baseFileName = path.basename(markdownFile, path.extname(markdownFile));
     const outputDir = path.dirname(markdownFile);
-    
+
     mermaidBlocks.forEach((block) => {
       const outputFileName = `${baseFileName}_mermaid_${block.index}.png`;
       const outputPath = path.join(outputDir, outputFileName);
       convertMermaidToPng(block.content, outputPath);
     });
-    
+
   } catch (error) {
     console.error(`Error processing file: ${error.message}`);
     process.exit(1);
