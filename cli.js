@@ -21,14 +21,21 @@ function extractMermaidBlocks(markdownContent) {
   return mermaidBlocks;
 }
 
-async function convertMermaidToPng(mermaidContent, outputPath) {
+async function convertMermaidToPng(mermaidContent, outputPath, options = {}) {
   const tempMmdFile = path.join(process.cwd(), `temp_${Date.now()}.mmd`);
 
   try {
     fs.writeFileSync(tempMmdFile, mermaidContent);
 
     const mmdc = path.join(process.cwd(), 'node_modules', '.bin', 'mmdc');
-    const command = `"${mmdc}" -i "${tempMmdFile}" -o "${outputPath}"`;
+
+    // 添加圖片大小控制參數
+    const width = options.width || 1920;
+    const height = options.height || 1080;
+    const scale = options.scale || 1;
+    const backgroundColor = options.backgroundColor || 'white';
+
+    const command = `"${mmdc}" -i "${tempMmdFile}" -o "${outputPath}" -w ${width} -H ${height} -s ${scale} -b ${backgroundColor}`;
 
     execSync(command, { stdio: 'inherit' });
     console.log(`Generated: ${outputPath}`);
@@ -48,7 +55,7 @@ function processMarkdownFile(markdownFile) {
   }
 
   try {
-    const markdownContent = fs.readFileSync(markdownFile, 'utf8');    
+    const markdownContent = fs.readFileSync(markdownFile, 'utf8');
     const mermaidBlocks = extractMermaidBlocks(markdownContent);
 
     if (mermaidBlocks.length === 0) {
@@ -64,7 +71,16 @@ function processMarkdownFile(markdownFile) {
     mermaidBlocks.forEach((block) => {
       const outputFileName = `${baseFileName}_mermaid_${block.index}.png`;
       const outputPath = path.join(outputDir, outputFileName);
-      convertMermaidToPng(block.content, outputPath);
+
+      // 可以自定義圖片大小選項
+      const imageOptions = {
+        width: 1920,     // 寬度
+        height: 1080,    // 高度
+        scale: 1,        // 縮放比例
+        backgroundColor: 'white'  // 背景色
+      };
+
+      convertMermaidToPng(block.content, outputPath, imageOptions);
     });
 
   } catch (error) {
@@ -80,6 +96,10 @@ program
   .description('Extract and convert Mermaid diagrams from Markdown files to PNG images')
   .version('1.0.0')
   .argument('<markdown-file>', 'Path to the Markdown file to process')
+  .option('-w, --width <number>', 'Image width', '1920')
+  .option('-h, --height <number>', 'Image height', '1080')
+  .option('-s, --scale <number>', 'Scale factor', '1')
+  .option('-b, --background <color>', 'Background color', 'white')
   .action((markdownFile) => {
     processMarkdownFile(markdownFile);
   });
