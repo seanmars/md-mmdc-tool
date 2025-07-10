@@ -4,7 +4,8 @@
   "description": "CLI tool to extract Mermaid diagrams from Markdown files and convert them to PNG images",
   "main": "cli.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "mdmmdc": "node cli.js"
   },
   "bin": {
     "mdmmdc": "./cli.js"
